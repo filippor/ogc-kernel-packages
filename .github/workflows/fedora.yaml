@@ -164,7 +164,8 @@ jobs:
       - name: Dependencies
         if: steps.check-existing.outputs.exists != 'true'
         run: |
-          dnf -y install gnupg2 jq sed wget dnf copr-cli patch rpmbuild make gcc flex
+          dnf -y builddep fedora/kernel.spec
+          dnf -y install gnupg2 jq sed wget copr-cli
 
       - name: Download and verify kernel source
         if: steps.check-existing.outputs.exists != 'true'
