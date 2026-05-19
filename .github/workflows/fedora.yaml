@@ -53,6 +53,10 @@ jobs:
       - name: Configure COPR credentials
         shell: bash
         run: |
+          test -n "${{ secrets.COPR_LOGIN }}" || { echo "COPR_LOGIN is missing"; exit 1; }
+          test -n "${{ secrets.COPR_USERNAME }}" || { echo "COPR_USERNAME is missing"; exit 1; }
+          test -n "${{ secrets.COPR_TOKEN }}" || { echo "COPR_TOKEN is missing"; exit 1; }
+
           mkdir -p /root/.config
           cat > /root/.config/copr <<EOF
           [copr-cli]
