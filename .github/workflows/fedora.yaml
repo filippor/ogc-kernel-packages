@@ -57,15 +57,15 @@ jobs:
           test -n "${{ secrets.COPR_USERNAME }}" || { echo "COPR_USERNAME is missing"; exit 1; }
           test -n "${{ secrets.COPR_TOKEN }}" || { echo "COPR_TOKEN is missing"; exit 1; }
 
-          mkdir -p /root/.config
-          cat > /root/.config/copr <<EOF
+          mkdir -p ~/.config
+          cat > ~/.config/copr <<EOF
           [copr-cli]
           login = ${{ secrets.COPR_LOGIN }}
           username = ${{ secrets.COPR_USERNAME }}
           token = ${{ secrets.COPR_TOKEN }}
           copr_url = https://copr.fedorainfracloud.org
           EOF
-          chmod 600 /root/.config/copr
+          chmod 600 ~/.config/copr
 
 
       - name: Checkout sources
@@ -238,7 +238,7 @@ jobs:
           TOPDIR="$(pwd)/rpmbuild"
           SRPM=$(ls "$TOPDIR"/SRPMS/*.src.rpm | head -n1)
           test -n "$SRPM"
-          copr-cli --debug build \
+          copr-cli build \
             --nowait \
             --chroot fedora-${{ matrix.fedora_version }}-x86_64 \
             "${{ env.COPR_PROJECT }}" \
