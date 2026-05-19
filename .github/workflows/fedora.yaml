@@ -182,6 +182,7 @@ jobs:
           wget https://cdn.kernel.org/pub/linux/kernel/v${MAJOR_VERSION}/linux-${TAR_KVER}.tar.sign
           wget https://github.com/OpenGamingCollective/linux/releases/download/v${OGC_VERSION}/monolithic.patch
           wget https://github.com/OpenGamingCollective/linux/releases/download/v${OGC_VERSION}/monolithic.patch.sig
+          wget https://raw.githubusercontent.com/duggasco/bc250-40cu-unlock/refs/heads/main/patch/bc250-40cu-amdgpu.patch
           # Import kernel.org signing keys (Linus Torvalds & Greg Kroah-Hartman)
           gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys \
             ABAF11C65A2970B130ABE3C479BE3E4300411886 \
@@ -195,6 +196,7 @@ jobs:
           tar -xf linux-${TAR_KVER}.tar.xz
           cd linux-${TAR_KVER}
           patch -Np1 < ../monolithic.patch
+          patch -Np1 < ../bc250-40cu-amdgpu.patch
 
       - name: Merge kernel configuration files
         if: steps.check-existing.outputs.exists != 'true'
