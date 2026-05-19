@@ -50,6 +50,20 @@ jobs:
           # Lowercase the image uri
           echo "OCI_REPO=${OCI_REPO,,}" >> ${GITHUB_ENV}
 
+      - name: Configure COPR credentials
+        shell: bash
+        run: |
+          mkdir -p /root/.config
+          cat > /root/.config/copr <<EOF
+          [copr-cli]
+          login = ${{ secrets.COPR_LOGIN }}
+          username = ${{ secrets.COPR_USERNAME }}
+          token = ${{ secrets.COPR_TOKEN }}
+          copr_url = https://copr.fedorainfracloud.org
+          EOF
+          chmod 600 /root/.config/copr
+
+
       - name: Checkout sources
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
@@ -150,7 +164,6 @@ jobs:
       - name: Dependencies
         if: steps.check-existing.outputs.exists != 'true'
         run: |
-          dnf -y builddep fedora/kernel.spec
           dnf -y install gnupg2 jq sed wget
 
       - name: Download and verify kernel source
@@ -213,18 +226,6 @@ jobs:
           rpmbuild --define "_topdir $TOPDIR" -bs ./fedora/kernel.spec
           ls -lah "$TOPDIR/SRPMS/"
 
-      - name: Configure COPR credentials
-        shell: bash
-        run: |
-          mkdir -p /root/.config
-          cat > /root/.config/copr <<EOF
-          [copr-cli]
-          login = ${{ secrets.COPR_LOGIN }}
-          username = ${{ secrets.COPR_USERNAME }}
-          token = ${{ secrets.COPR_TOKEN }}
-          copr_url = https://copr.fedorainfracloud.org
-          EOF
-          chmod 600 /root/.config/copr
 
       - name: Submit SRPM to COPR
         shell: bash
