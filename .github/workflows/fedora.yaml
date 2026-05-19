@@ -164,7 +164,7 @@ jobs:
       - name: Dependencies
         if: steps.check-existing.outputs.exists != 'true'
         run: |
-          dnf -y install gnupg2 jq sed wget dnf copr-cli patch rpmbuild make gcc
+          dnf -y install gnupg2 jq sed wget dnf copr-cli patch rpmbuild make gcc flex
 
       - name: Download and verify kernel source
         if: steps.check-existing.outputs.exists != 'true'
