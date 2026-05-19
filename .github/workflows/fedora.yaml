@@ -50,18 +50,6 @@ jobs:
           # Lowercase the image uri
           echo "OCI_REPO=${OCI_REPO,,}" >> ${GITHUB_ENV}
 
-      - name: Maximize build space
-        run: |
-          df -h
-          rm -rf /usr-host/share/dotnet
-          rm -rf /usr-host/share/swift
-          rm -rf /usr-host/share/java
-          rm -rf /usr-host/local/lib/android
-          rm -rf /opt-host/ghc
-          rm -rf /opt-host/hostedtoolcache
-          rm -rf /opt-host/az
-          df -h
-
       - name: Checkout sources
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
@@ -245,7 +233,7 @@ jobs:
           TOPDIR="$(pwd)/rpmbuild"
           SRPM=$(ls "$TOPDIR"/SRPMS/*.src.rpm | head -n1)
           test -n "$SRPM"
-          copr-cli build \
+          copr-cli --debug build \
             --nowait \
             --chroot fedora-${{ matrix.fedora_version }}-x86_64 \
             "${{ env.COPR_PROJECT }}" \
