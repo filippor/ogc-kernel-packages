@@ -221,66 +221,32 @@ jobs:
                   cp fedora/kvm_stat.logrotate "$TOPDIR/SOURCES/"
                   # Copy patched config
                   cp linux-${TAR_KVER}/.config "$TOPDIR/SOURCES/config"
-                  rpmbuild --define "_topdir $TOPDIR" -ba ./fedora/kernel.spec
+                  rpmbuild --define "_topdir $TOPDIR" -bs ./fedora/kernel.spec
+                  ls -lah "$TOPDIR/SRPMS/"
+            - name: Configure COPR credentials
+                shell: bash
+                run: |
+                    mkdir -p /root/.config
+                    cat > /root/.config/copr <<EOF
+                    [copr-cli]
+                    login = ${{ secrets.COPR_LOGIN }}
+                    username = ${{ secrets.COPR_USERNAME }}
+                    token = ${{ secrets.COPR_TOKEN }}
+                    copr_url = https://copr.fedorainfracloud.org
+                    EOF
+                    chmod 600 /root/.config/copr
 
-            - name: Setup Cosign
-              if: startsWith(github.ref, 'refs/tags/') && steps.check-existing.outputs.exists != 'true'
-              uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22 # v4.1.0
-
-            - name: Login to ghcr.io
-              if: startsWith(github.ref, 'refs/tags/') && steps.check-existing.outputs.exists != 'true'
+            - name: Submit SRPM to COPR
+              shell: bash
               run: |
-                  echo "${{ secrets.GITHUB_TOKEN }}" | oras login ghcr.io -u ${{ github.actor }} --password-stdin
+                dnf -y install copr-cli
+                TOPDIR="$(pwd)/rpmbuild"
+                SRPM=$(ls "$TOPDIR"/SRPMS/*.src.rpm | head -n1)
+                test -n "$SRPM"
+                copr-cli build \
+                    --nowait \
+                    --chroot fedora-${{ matrix.fedora_version }}-x86_64 \
+                    "${{ env.COPR_PROJECT }}" \
+                    "$SRPM"
 
-            - name: Push OCI artifact
-              if: startsWith(github.ref, 'refs/tags/') && steps.check-existing.outputs.exists != 'true'
-              id: push
-              run: |
-                  VERSION="${{ steps.version.outputs.ogc_version }}.${{ steps.buildnum.outputs.build_num }}"
-                  REPO="${{ env.OCI_REPO }}"
-                  TOPDIR="$(pwd)/rpmbuild"
-                  mkdir -p /tmp/rpms
-                  cp "$TOPDIR"/RPMS/x86_64/*.rpm /tmp/rpms/ 2>/dev/null || true
-                  cp "$TOPDIR"/RPMS/noarch/*.rpm /tmp/rpms/ 2>/dev/null || true
-                  cd /tmp/rpms
-                  DIGEST=$(oras push --format json "${REPO}:${VERSION}-fc${{ matrix.fedora_version }}" ./*.rpm | jq -r '.digest')
-                  if [ -z "$DIGEST" ]; then
-                      echo "::error::Failed to capture digest from oras push"
-                      exit 1
-                  fi
-                  oras tag "${REPO}:${VERSION}-fc${{ matrix.fedora_version }}" latest-fc${{ matrix.fedora_version }}
-                  echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
 
-            - name: Tag with content hash
-              if: startsWith(github.ref, 'refs/tags/') && steps.check-existing.outputs.exists != 'true'
-              run: |
-                  REPO="${{ env.OCI_REPO }}"
-                  VERSION="${{ steps.version.outputs.ogc_version }}.${{ steps.buildnum.outputs.build_num }}"
-                  oras tag "${REPO}:${VERSION}-fc${{ matrix.fedora_version }}" \
-                    "sha-${{ steps.content-hash.outputs.hash }}-fc${{ matrix.fedora_version }}"
-
-            - name: Sign artifacts
-              if: startsWith(github.ref, 'refs/tags/') && steps.check-existing.outputs.exists != 'true'
-              run: |
-                  VERSION="${{ steps.version.outputs.ogc_version }}.${{ steps.buildnum.outputs.build_num }}"
-                  REPO="${{ env.OCI_REPO }}"
-                  cosign sign --yes "${REPO}:${VERSION}-fc${{ matrix.fedora_version }}"
-                  cosign sign --yes "${REPO}:latest-fc${{ matrix.fedora_version }}"
-
-            - name: Attest build provenance
-              if: startsWith(github.ref, 'refs/tags/') && steps.check-existing.outputs.exists != 'true'
-              uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4
-              with:
-                  subject-name: ${{ env.OCI_REPO }}
-                  subject-digest: ${{ steps.push.outputs.digest }}
-                  push-to-registry: true
-
-            - name: Verify signature
-              if: startsWith(github.ref, 'refs/tags/') && steps.check-existing.outputs.exists != 'true'
-              run: |
-                  VERSION="${{ steps.version.outputs.ogc_version }}.${{ steps.buildnum.outputs.build_num }}"
-                  REPO="${{ env.OCI_REPO }}"
-                  cosign verify \
-                    --certificate-identity-regexp=".*" \
-                    --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
-                    "${REPO}:${VERSION}-fc${{ matrix.fedora_version }}"
