@@ -164,7 +164,7 @@ jobs:
       - name: Dependencies
         if: steps.check-existing.outputs.exists != 'true'
         run: |
-          dnf -y install gnupg2 jq sed wget
+          dnf -y install gnupg2 jq sed wget dnf copr-cli patch rpmbuild
 
       - name: Download and verify kernel source
         if: steps.check-existing.outputs.exists != 'true'
@@ -230,7 +230,6 @@ jobs:
       - name: Submit SRPM to COPR
         shell: bash
         run: |
-          dnf -y install copr-cli
           TOPDIR="$(pwd)/rpmbuild"
           SRPM=$(ls "$TOPDIR"/SRPMS/*.src.rpm | head -n1)
           test -n "$SRPM"
