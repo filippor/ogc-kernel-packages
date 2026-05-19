@@ -11,7 +11,8 @@ on:
       - 'v*'
 
 env:
-  OCI_REPO: ghcr.io/${{ github.repository }}-fedora
+  COPR_PROJECT: filippor/bazzite
+
 
 permissions:
   contents: read
