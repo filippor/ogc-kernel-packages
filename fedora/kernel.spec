@@ -69,6 +69,7 @@ ExcludeArch:    %{ix86}
 
 # Stable patches
 Patch0: monolithic.patch
+Patch1: bc250-40cu-amdgpu.patch
 
 %define __spec_install_post /usr/lib/rpm/brp-compress || :
 %define debug_package %{nil}

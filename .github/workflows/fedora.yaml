@@ -182,7 +182,7 @@ jobs:
           wget https://cdn.kernel.org/pub/linux/kernel/v${MAJOR_VERSION}/linux-${TAR_KVER}.tar.sign
           wget https://github.com/OpenGamingCollective/linux/releases/download/v${OGC_VERSION}/monolithic.patch
           wget https://github.com/OpenGamingCollective/linux/releases/download/v${OGC_VERSION}/monolithic.patch.sig
-          wget https://raw.githubusercontent.com/duggasco/bc250-40cu-unlock/refs/heads/main/patch/bc250-40cu-amdgpu.patch
+          wget https://raw.githubusercontent.com/duggasco/bc250-40cu-unlock/refs/heads/main/patch/F
           # Import kernel.org signing keys (Linus Torvalds & Greg Kroah-Hartman)
           gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys \
             ABAF11C65A2970B130ABE3C479BE3E4300411886 \
@@ -227,6 +227,7 @@ jobs:
           # Pre-populate SOURCES with already-downloaded files
           cp linux-${TAR_KVER}.tar.xz "$TOPDIR/SOURCES/"
           cp monolithic.patch "$TOPDIR/SOURCES/"
+          cp bc250-40cu-amdgpu.patch "$TOPDIR/SOURCES/"
           cp fedora/kvm_stat.logrotate "$TOPDIR/SOURCES/"
           # Copy patched config
           cp linux-${TAR_KVER}/.config "$TOPDIR/SOURCES/config"
