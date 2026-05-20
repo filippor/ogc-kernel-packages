@@ -168,8 +168,9 @@ jobs:
       - name: Dependencies
         if: steps.check-existing.outputs.exists != 'true'
         run: |
-          dnf -y builddep fedora/kernel.spec
-          dnf -y install gnupg2 jq sed wget copr-cli
+          #dnf -y builddep fedora/kernel.spec
+          dnf -y install make gcc bison flex openssl-devel elfutils-libelf-devel
+          dnf -y install gnupg2 jq sed wget copr-cli patch rpmbuild
 
       - name: Download and verify kernel source
         if: steps.check-existing.outputs.exists != 'true'
@@ -227,6 +228,7 @@ jobs:
           # Pre-populate SOURCES with already-downloaded files
           cp linux-${TAR_KVER}.tar.xz "$TOPDIR/SOURCES/"
           cp monolithic.patch "$TOPDIR/SOURCES/"
+          cp bc250-40cu-amdgpu.patch "$TOPDIR/SOURCES/"
           cp fedora/kvm_stat.logrotate "$TOPDIR/SOURCES/"
           # Copy patched config
           cp linux-${TAR_KVER}/.config "$TOPDIR/SOURCES/config"
