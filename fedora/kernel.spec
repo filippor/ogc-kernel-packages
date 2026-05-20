@@ -335,6 +335,9 @@ analysing the logical and timing behavior of Linux.
 # Apply OGC patch
 patch -p1 -i %{PATCH0}
 
+# Apply BC250 patch
+patch -p1 -i %{PATCH1}
+
 # Fetch the config and move it to the proper directory
 cp %{SOURCE1} .config
 
