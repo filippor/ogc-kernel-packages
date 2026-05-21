@@ -136,11 +136,8 @@ rm -rf %{buildroot}
 
 %post 
 /sbin/depmod -a %{kverstr}
-if [ -e /run/ostree-booted ]; then
-    rpm-ostree initramfs --enable
-else
-    dracut -f --kver %{kverstr}
-fi
+dracut -f --kver %{kverstr}
+
 
 
 %files 
