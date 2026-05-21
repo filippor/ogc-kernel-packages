@@ -101,9 +101,7 @@ jobs:
           echo "stable_kver=$STABLE_KVER" >> "$GITHUB_OUTPUT"
           echo "tar_kver=$TAR_KVER" >> "$GITHUB_OUTPUT"
 
-      - name: Setup ORAS
-        uses: oras-project/setup-oras@22ce207df3b08e061f537244349aac6ae1d214f6 # v1
-
+      
       - name: Compute content hash
         id: content-hash
         shell: bash
@@ -164,6 +162,12 @@ jobs:
             -e "s/@@OGCVER@@/${{ steps.version.outputs.ogc_rev }}/" \
             -e "s/@@BUILDNUM@@/${{ steps.buildnum.outputs.build_num }}/" \
             fedora/kernel.spec
+          sed -i \
+            -e "s/@@BASEKVER@@/${{ steps.version.outputs.base_kver }}/" \
+            -e "s/@@STABLEKVER@@/${{ steps.version.outputs.stable_kver }}/" \
+            -e "s/@@OGCVER@@/${{ steps.version.outputs.ogc_rev }}/" \
+            -e "s/@@BUILDNUM@@/${{ steps.buildnum.outputs.build_num }}/" \
+            fedora/bc250_patched_amdgpu_kmod.spec
 
       - name: Dependencies
         if: steps.check-existing.outputs.exists != 'true'
@@ -233,6 +237,7 @@ jobs:
           # Copy patched config
           cp linux-${TAR_KVER}/.config "$TOPDIR/SOURCES/config"
           rpmbuild --define "_topdir $TOPDIR" -bs ./fedora/kernel.spec
+          rpmbuild --define "_topdir $TOPDIR" -bs ./fedora/bc250_patched_amdgpu_kmod.spec
           ls -lah "$TOPDIR/SRPMS/"
 
 
@@ -240,10 +245,15 @@ jobs:
         shell: bash
         run: |
           TOPDIR="$(pwd)/rpmbuild"
-          SRPM=$(ls "$TOPDIR"/SRPMS/*.src.rpm | head -n1)
+          SRPM=$(ls "$TOPDIR"/SRPMS/kernel*.src.rpm | head -n1)
           test -n "$SRPM"
           copr-cli build \
-            --nowait \
+            --chroot fedora-${{ matrix.fedora_version }}-x86_64 \
+            "${{ env.COPR_PROJECT }}" \
+            "$SRPM"
+          SRPM=$(ls "$TOPDIR"/SRPMS/bc250*.src.rpm | head -n1)
+          test -n "$SRPM"
+          copr-cli build \
             --chroot fedora-${{ matrix.fedora_version }}-x86_64 \
             "${{ env.COPR_PROJECT }}" \
             "$SRPM"
