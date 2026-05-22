@@ -136,7 +136,7 @@ rm -rf %{buildroot}
 
 %post 
 /sbin/depmod -a %{kverstr}
-dracut -f --kver %{kverstr}
+# User still needs to run: rpm-ostree initramfs --enable && reboot
 
 
 

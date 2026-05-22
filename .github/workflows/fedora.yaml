@@ -102,42 +102,16 @@ jobs:
           echo "tar_kver=$TAR_KVER" >> "$GITHUB_OUTPUT"
 
       
-      - name: Compute content hash
-        id: content-hash
-        shell: bash
-        run: |
-          HASH=$(
-            {
-              echo "ogc_version=${{ steps.version.outputs.ogc_version }}"
-              echo "fedora_version=${{ matrix.fedora_version }}"
-              sha256sum \
-                fedora/kernel.spec \
-                fedora/config \
-                fedora/kvm_stat.logrotate \
-                config/fedora.config.set \
-                config/ogc.config.set \
-                config/fedora.config.unset \
-                config/ogc.config.unset \
-                .github/workflows/fedora.yaml
-            } | sha256sum | cut -d' ' -f1
-          )
-          SHORT_HASH="${HASH:0:12}"
-          echo "hash=$SHORT_HASH" >> "$GITHUB_OUTPUT"
-          echo "Content hash: $SHORT_HASH"
 
       - name: Check for existing build
         id: check-existing
         shell: bash
         run: |
-          REPO="${OCI_REPO,,}"
-          TAG="sha-${{ steps.content-hash.outputs.hash }}-fc${{ matrix.fedora_version }}"
-          if oras manifest fetch "${REPO}:${TAG}" > /dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::Skipping build, artifact with content hash ${TAG} already exists"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-            echo "No existing artifact for ${TAG}, proceeding with build"
-          fi
+         
+          PACKAGE="kernel-fc${{ matrix.fedora_version }}"
+          #TODO: chack if package exists in COPR 
+          echo "exists=false" >> "$GITHUB_OUTPUT"
+         
 
       - name: Get build number
         if: steps.check-existing.outputs.exists != 'true'
@@ -145,9 +119,8 @@ jobs:
         shell: bash
         run: |
           VERSION_PREFIX="${{ steps.version.outputs.ogc_version }}"
-          REPO="${OCI_REPO,,}"
-          EXISTING=$(oras repo tags "${REPO}" 2>/dev/null || true)
-          EXISTING=$(echo "$EXISTING" | { grep -cE "^${VERSION_PREFIX}\.[0-9]+-fc${{ matrix.fedora_version }}$" || true; })
+          #TODO: query COPR for existing builds of this version and set EXISTING to the count of existing builds
+          EXISTING=0
           BUILD_NUM=$((EXISTING + 1))
           echo "build_num=$BUILD_NUM" >> "$GITHUB_OUTPUT"
           echo "Build number: $BUILD_NUM"
